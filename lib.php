@@ -608,8 +608,20 @@ class plagiarism_plugin_urkund extends plagiarism_plugin {
                     require_once("$CFG->dirroot/mod/assign/locallib.php");
                     $modulecontext = context_module::instance($eventdata->cmid);
                     $assign = new assign($modulecontext, false, false);
+
+                    $userid = $eventdata->userid;
+                    // Check if submission userid matches eventdata->userid.
+                    $submission = $DB->get_record('assign_submission', array('id' => $eventdata->itemid, 'assignment' => $assign->get_instance()->id));
+                    if (!empty($submission)) {
+                        if ($submission->userid !== $eventdata->userid) {
+                            // This submission may have been uploaded by a teacher for a student.
+                            // TODO: Should we check if $eventdata->userid has permissions to submit another students submission?
+                            $userid = $submission->userid;
+                        }
+                    }
+
                     if (!empty($assign->get_instance()->teamsubmission)) {
-                        $mygroups = groups_get_user_groups($assign->get_course()->id, $eventdata->userid);
+                        $mygroups = groups_get_user_groups($assign->get_course()->id, $userid);
                         if (count($mygroups) == 1) {
                             $groupid = reset($mygroups)[0];
                             // Only users with single groups are supported - otherwise just use the normal userid on this record.
@@ -625,14 +637,14 @@ class plagiarism_plugin_urkund extends plagiarism_plugin {
                             $sanitycheckusers = 10; // Search through this number of users to find a valid previous submission.
                             $i = 0;
                             foreach ($previousfiles as $pf) {
-                                if ($pf->userid == $eventdata->userid) {
+                                if ($pf->userid == $userid) {
                                     break; // The submission comes from this user so break.
                                 }
                                 // Sanity Check to make sure the user isn't in multiple groups.
                                 $pfgroups = groups_get_user_groups($assign->get_course()->id, $pf->userid);
                                 if (count($pfgroups) == 1) {
                                     // This user made the first valid submission so use their id when sending the file.
-                                    $eventdata->userid = $pf->userid;
+                                    $userid = $pf->userid;
                                     break;
                                 }
                                 if ($i >= $sanitycheckusers) {
@@ -645,7 +657,7 @@ class plagiarism_plugin_urkund extends plagiarism_plugin {
                     }
                 }
 
-                $sendresult = urkund_send_file($cmid, $eventdata->userid, $efile, $plagiarismsettings);
+                $sendresult = urkund_send_file($cmid, $userid, $efile, $plagiarismsettings);
                 $result = $result && $sendresult;
             }
         }
