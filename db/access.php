@@ -58,4 +58,12 @@ $capabilities = array(
          'teacher' => CAP_ALLOW,
          'manager' => CAP_ALLOW)
     ),
+    'plagiarism/urkund:resubmitall' => array(
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_COURSE,
+         'legacy' => array(
+         'editingteacher' => CAP_PROHIBIT,
+         'teacher' => CAP_PROHIBIT,
+         'manager' => CAP_PROHIBIT)
+    ),
 );
