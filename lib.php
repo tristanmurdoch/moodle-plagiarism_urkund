@@ -1821,6 +1821,9 @@ function plagiarism_urkund_send_files() {
                     continue;
                 } else {
                     // No file found, but we have a report, so don't delete.
+                    mtrace("URKUND fileid:$pf->id No file found, but we have a report, so don't delete. Changing status to Analyzed");
+                    $pf->statuscode = 'Analyzed';
+                    $DB->update_record('plagiarism_urkund_files', $pf);
                     continue;
                 }
             }
